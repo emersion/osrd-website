@@ -63,7 +63,7 @@ flowchart TD
 name: Ma manchette
 path:
   - { uic: 87210 } # Any operational point matching the given uic
-  - { track: foo, offset: 1000 } # 10m on track foo
+  - { track: foo, offset: 10000 } # 10m on track foo
   - { trigram: ABC } # Any operational point matching the trigram ABC
   - { operational_point: 35f57ee0-4e67-4cf7-9946-0c6be757ef85 } # A specified operational point
 operational_point_settings:
