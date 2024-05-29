@@ -11,7 +11,7 @@ description: "Description du design de la manchette"
 - Pouvoir créer une manchette à partir d'une liste de PR
 - Pouvoir créer une manchette à partir d'un train
 - Pouvoir utiliser une manchette sur des infrastructures différentes
-- Pouvoir configurer l'affichage de la manchette et que ce soit sauvegarder entre les utilisateurs
+- Pouvoir configurer l'affichage de la manchette et que ce soit sauvegardé entre les utilisateurs
 
 ### Questions?
 
