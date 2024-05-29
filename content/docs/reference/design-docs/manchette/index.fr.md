@@ -17,7 +17,7 @@ description: "Description du design de la manchette"
 
 - Quelle manchette prendre au début ?
   - Proposition: Un train, cela implique d'avoir des manchettes éphémères.
-- Une manchette créer via un train: Qui porte l'information du chemin ?
+- Une manchette créée via un train: Qui porte l'information du chemin ?
   - Proposition: on copie les informations du train pour créer l'objet.
 - Overlapp des stretching ?
   - On peut créer un overlapp (en modifiant l'infra par exemple)
