@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Train simulation v3 on OSRD</title><link>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/</link><description>Recent content in Train simulation v3 on OSRD</description><generator>Hugo</generator><language>en</language><atom:link href="https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/index.xml" rel="self" type="application/rss+xml"/><item><title>Overview</title><link>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/overview/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/overview/</guid><description>&lt;div class="pageinfo pageinfo-warning">
+&lt;p>This work is pending implementation, and has not yet been adjusted to
+reflect potential required adjustments.&lt;/p>
+
+&lt;/div>
+
+&lt;p>After two years of extending a fairly simple simulation engine, it appeared that fundamental
+changes are required to meet expectations.&lt;/p>
+&lt;h2 id="system-requirements">System requirements&lt;/h2>
+&lt;p>The new system is expected to:&lt;/p>
+&lt;ol>
+&lt;li>handle reactions to signaling&lt;/li>
+&lt;li>handle rich train state (pantograph position, battery state)&lt;/li>
+&lt;li>allow for different margin algorithms&lt;/li>
+&lt;li>integrate driver behavior properties&lt;/li>
+&lt;li>be easy to integrate with &lt;a href="https://osrd.fr/en/docs/reference/design-docs/timetable/">timetable v2&lt;/a>&lt;/li>
+&lt;li>handle both:
+&lt;ul>
+&lt;li>simulations of a full trip, with a complete known path, possibly following a schedule&lt;/li>
+&lt;li>simulations where the path is discovered incrementally&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>provide a low-level API, usable independently&lt;/li>
+&lt;/ol>
+&lt;p>In the long-term, this system is also expected to:&lt;/p></description></item><item><title>Prior art</title><link>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/prior-art/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/prior-art/</guid><description>&lt;p>The current implementation has a number of shortcomings making it pretty much impossible to evolve to
+meet current system requirements. It also has a number of less severe flaws, such as the over-reliance
+on floating point, especially for input and output.&lt;/p>
+&lt;p>The previous implementation cannot be changed to:&lt;/p>
+&lt;ul>
+&lt;li>react to signaling, as constraints stay the same as the simulation evolves&lt;/li>
+&lt;li>handle rich train state vectors, due to the way margins are implemented&lt;/li>
+&lt;li>be usable for both incremental simulation and batch&lt;/li>
+&lt;/ul>
+&lt;p>These limitations are the primary reasons for this redesign.&lt;/p></description></item><item><title>Driving instructions</title><link>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/driving-instruction/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/driving-instruction/</guid><description>&lt;p>Driving instructions model what the train has to do, and under what conditions.
+Driving instructions are generated using domain constraints such as:&lt;/p>
+&lt;ul>
+&lt;li>unsignaled line speed limits&lt;/li>
+&lt;li>permanent signaled speed limits&lt;/li>
+&lt;li>temporary speed limits&lt;/li>
+&lt;li>dynamic signaling:
+&lt;ul>
+&lt;li>block / moving block&lt;/li>
+&lt;li>dynamically signaled speed restrictions&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>neutral zones&lt;/li>
+&lt;li>stops&lt;/li>
+&lt;li>margins&lt;/li>
+&lt;/ul>
+&lt;p>There are two types of driving instructions:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Abstract driving instructions&lt;/strong> model the high-level, rolling stock independent
+range of acceptable behavior: reach 30km/h at this location&lt;/li>
+&lt;li>&lt;strong>Concrete driving instructions&lt;/strong> model the specific range of acceptable behavior
+for a specific rolling stock, using limit curves: don&amp;rsquo;t go faster than this curve&lt;/li>
+&lt;/ul>
+&lt;pre class="mermaid">flowchart TD
+Constraint[constraint]
+AbstractDrivingInstruction[abstract driving instruction]
+ConcreteDrivingInstruction[concrete driving instruction]
+RollingStockIntegrator[rolling stock integrator]
+Compiler([compiler])
+
+Constraint -- generates one or more --&amp;gt; AbstractDrivingInstruction
+AbstractDrivingInstruction --&amp;gt; Compiler
+RollingStockIntegrator --&amp;gt; Compiler
+Compiler --&amp;gt; ConcreteDrivingInstruction&lt;/pre>
+
+
+&lt;div class="pageinfo pageinfo-warning">
+&lt;p>After reviewing the design document, the necessity to distinguish between abstract and concrete driving instructions was questioned.&lt;/p></description></item><item><title>Driver behavior modules</title><link>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/driver-behavior-modules/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://osrd.fr/en/docs/reference/design-docs/train-sim-v3/driver-behavior-modules/</guid><description>&lt;h2 id="design-specs">Design specs&lt;/h2>
+&lt;h3 id="general-pitch">General pitch&lt;/h3>
+&lt;p>Driver behavior modules are responsible for making driving decisions.
+Its main responsibility, given the state of the train and an instruction, is to react to the instruction.
+This reaction is expressed as a new train state.&lt;/p>
+&lt;p>To perform this critical task, it needs access to additional context:&lt;/p>
+&lt;ul>
+&lt;li>the physical properties of the path, which are used to make coasting decisions, and to model natural forces.&lt;/li>
+&lt;li>a slowdown coefficient, which is used to adjust how much the train is slowed down compared to a
+full power simulation.&lt;/li>
+&lt;/ul>
+&lt;p>The driver behavior modules are supposed to have different implementations, which would interpret the slow down coefficient differently.&lt;/p></description></item></channel></rss>
