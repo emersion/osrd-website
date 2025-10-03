@@ -2,6 +2,12 @@ backend:
   name: "github"
   #repo: "OpenRailAssociation/osrd-website"
   repo: "emersion/osrd-website"
+  commit_messages:
+    create: "{{collection}}: create “{{slug}}”"
+    update: "{{collection}}: update “{{slug}}”"
+    delete: "{{collection}}: delete “{{slug}}”"
+    uploadMedia: "images: upload “{{path}}”"
+    deleteMedia: "images: delete “{{path}}”"
 site_url: "https://osrd.fr"
 media_folder: "static/images"
 public_folder: "/images"
